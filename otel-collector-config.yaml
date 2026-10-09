@@ -10,18 +10,18 @@ processors:
   memory_limiter:
     check_interval: 2s
     limit_mib: 256
-    spike_limit_mib: 64
+    spike_limit_mib: 64            
 
-  
-  filter/ottl:           
-    error_mode: ignore  #here will complete process and log error in debug window and not drop T/ ignore is best one
-                        # silent: will complete process and not log error message and not drop T/ propagate: will break flow and drop telemetry data
-    traces:
-      span:
-      - 'attributes["user.name"] == "Mohammed Ahmed"'
-      - 'attributes["payment.card.brand"] == "visa"'
+  transform:
+    error_mode: ignore
+    trace_statements:  
+      - context: resource
+        statements:
+          - 'set(attributes["platform"], "kubernetes")'
 
-
+      - context: span
+        statements:
+          - 'set(status.code, STATUS_CODE_OK) where status.code == STATUS_CODE_UNSET'
 
   # transform/redact_sensitive:
   #   error_mode: ignore
@@ -49,5 +49,5 @@ service:
   pipelines:
     traces:
       receivers: [otlp]
-      processors: [filter/ottl ,memory_limiter, batch]
+      processors: [transform ,memory_limiter, batch]
       exporters: [debug]
