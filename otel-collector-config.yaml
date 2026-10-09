@@ -1,0 +1,55 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  memory_limiter:
+    check_interval: 2s
+    limit_mib: 256
+    spike_limit_mib: 64
+
+  
+  filter/ottl:           
+    error_mode: ignore  #here will complete process and log error in debug window and not drop T/ ignore is best one
+                        # silent: will complete process and not log error message and not drop T/ propagate: will break flow and drop telemetry data
+    traces:
+      span:
+      - resource.attributes["service.name"] == "flight"
+      - resource.attributes["service.name"] == "auth"
+      - resource.attributes["service.name"] == "payment"
+
+
+
+
+  # transform/redact_sensitive:
+  #   error_mode: ignore
+  #   trace_statements:
+  #     - context: span
+  #       statements:
+  #         - 'set(attributes["user.email"], "REDACTED") where attributes["user.email"] != nil'
+  #         - 'set(attributes["user.name"], "REDACTED") where attributes["user.name"] != nil'
+  #         - 'set(attributes["client.address"], "REDACTED") where attributes["client.address"] != nil'
+  #         - 'delete_key(attributes, "payment.card.number")'
+  #         - 'delete_key(attributes, "payment.card.cvv")'
+  #         - 'set(attributes["flight.passenger.name"], "REDACTED") where attributes["flight.passenger.name"] != nil'
+  #         - 'delete_key(attributes, "flight.passport.number")'
+  #         - 'delete_key(attributes, "auth.password")'
+  #         - 'set(attributes["auth.token"], "REDACTED") where attributes["auth.token"] != nil'
+
+  batch:
+    timeout: 3s
+
+exporters:
+  debug:
+    verbosity: detailed
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [filter/ottl ,memory_limiter, batch]
+      exporters: [debug]
