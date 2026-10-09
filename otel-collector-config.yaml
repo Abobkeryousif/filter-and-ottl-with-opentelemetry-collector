@@ -18,10 +18,8 @@ processors:
                         # silent: will complete process and not log error message and not drop T/ propagate: will break flow and drop telemetry data
     traces:
       span:
-      - resource.attributes["service.name"] == "flight"
-      - resource.attributes["service.name"] == "auth"
-      - resource.attributes["service.name"] == "payment"
-
+      - 'attributes["user.name"] == "Mohammed Ahmed"'
+      - 'attributes["payment.card.brand"] == "visa"'
 
 
 
